@@ -5,7 +5,11 @@ description = "Cloud function to parse service logs CSV"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "functions-framework>=3.0.0"
+    "functions-framework>=3.0.0",
+    "pandas>=2.2.0",
+    "sqlmodel>=0.0.27",
+    "psycopg[binary]>=3.2.13",
+    "google-cloud-storage>=2.18.0",
 ]
 
 [build-system]

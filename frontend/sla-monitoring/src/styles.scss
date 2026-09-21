@@ -42,3 +42,67 @@ body {
 mat-icon svg {
   fill: currentColor;
 }
+
+// Material's M3 theme only ships an `error` semantic color role out of the
+// box. `success`/`warning`/`info` are extended here, following the same
+// `-container` / `on-*-container` naming convention, for the generic
+// dialog and snackbar components to key their styling off of.
+:root {
+  --mat-sys-success: #2e7d32;
+  --mat-sys-success-container: #e8f5e9;
+  --mat-sys-on-success-container: #1b5e20;
+
+  --mat-sys-warning: #ed6c02;
+  --mat-sys-warning-container: #fff3e0;
+  --mat-sys-on-warning-container: #7a3c00;
+
+  --mat-sys-info: #0288d1;
+  --mat-sys-info-container: #e1f5fe;
+  --mat-sys-on-info-container: #01579b;
+}
+
+@include mat.dialog-overrides(
+  (
+    actions-alignment: center,
+    container-shape: var(--mat-sys-corner-medium),
+    content-padding: 24px 16px,
+    with-actions-content-padding: 24px 16px 0px 16px,
+    actions-padding: 24px 24px,
+  )
+);
+
+.snackbar-success {
+  @include mat.snack-bar-overrides(
+    (
+      container-color: var(--mat-sys-success-container),
+      supporting-text-color: var(--mat-sys-on-success-container),
+    )
+  );
+}
+
+.snackbar-error {
+  @include mat.snack-bar-overrides(
+    (
+      container-color: var(--mat-sys-error-container),
+      supporting-text-color: var(--mat-sys-on-error-container),
+    )
+  );
+}
+
+.snackbar-warning {
+  @include mat.snack-bar-overrides(
+    (
+      container-color: var(--mat-sys-warning-container),
+      supporting-text-color: var(--mat-sys-on-warning-container),
+    )
+  );
+}
+
+.snackbar-info {
+  @include mat.snack-bar-overrides(
+    (
+      container-color: var(--mat-sys-info-container),
+      supporting-text-color: var(--mat-sys-on-info-container),
+    )
+  );
+}

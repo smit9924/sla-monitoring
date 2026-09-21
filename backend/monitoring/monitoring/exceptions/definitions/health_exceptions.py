@@ -7,6 +7,6 @@ class ServiceUnavailableException(BaseException):
 
     def __init__(
         self,
-        message: str = "The service is currently unavailable. Please try again later."
+        message: str = "The service is currently unavailable. Please try again later.",
     ) -> None:
         super().__init__(ErrorCodes.SERVICE_UNAVAILABLE, message)

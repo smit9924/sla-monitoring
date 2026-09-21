@@ -11,7 +11,7 @@ HEALTH_EXCEPTIONS_DOC = {
                     "example": {
                         "metadata": "None",
                         "message": "The service is currently unavailable. Please try again later.",
-                        "errorCode": ErrorCodes.SERVICE_UNAVAILABLE
+                        "errorCode": ErrorCodes.SERVICE_UNAVAILABLE,
                     }
                 }
             },

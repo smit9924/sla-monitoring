@@ -42,7 +42,9 @@ class GCSStorage(BaseStorage):
             raise StorageOperationFailedException from e
 
         self._bucket = self._client.bucket(settings.gcs_bucket_name)
-        self._default_url_expiration_seconds = settings.gcs_signed_url_expiration_seconds
+        self._default_url_expiration_seconds = (
+            settings.gcs_signed_url_expiration_seconds
+        )
 
     def upload(
         self,
@@ -89,7 +91,10 @@ class GCSStorage(BaseStorage):
     def list_files(self, *, prefix: str | None = None) -> list[str]:
         """List via `Client.list_blobs`."""
         try:
-            return [blob.name for blob in self._client.list_blobs(self._bucket, prefix=prefix)]
+            return [
+                blob.name
+                for blob in self._client.list_blobs(self._bucket, prefix=prefix)
+            ]
         except GoogleAPIError as e:
             log.exception("GCS list_blobs failed for prefix %s", prefix)
             raise StorageOperationFailedException from e

@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 
+from sqlalchemy import Index
 from sqlmodel import Field
 
 from .base import SQLModel
@@ -13,8 +14,7 @@ class ServiceLog(SQLModel, table=True):
     to provide: service_id, service_name, timestamp, status_code, latency,
     latency_unit, agent, region. `latency` and `latency_unit` are normalized
     into a single `latency_ms` column at parse time, and `timestamp` is
-    normalized to UTC and stored as `recorded_at`. `service_id` is not stored
-    yet, since the source system does not provide one at this time.
+    normalized to UTC and stored as `recorded_at`.
 
     Attributes
     ----------
@@ -24,6 +24,8 @@ class ServiceLog(SQLModel, table=True):
         Foreign key reference to the source file (`uploaded_files.id`).
         Preserves lineage back to the CSV a row was parsed from, which is
         needed for auditing, debugging bad data, and re-processing.
+    service_id : str
+        Identifier of the monitored service, as provided in the CSV.
     service_name : str
         Human-readable name of the monitored service, as provided in the CSV.
     recorded_at : datetime
@@ -53,6 +55,14 @@ class ServiceLog(SQLModel, table=True):
 
     __tablename__ = "service_logs"  # type: ignore
 
+    __table_args__ = (
+        Index(
+            "ix_service_logs_service_id_recorded_at",
+            "service_id",
+            "recorded_at",
+        ),
+    )
+
     id: int | None = Field(default=None, primary_key=True, index=True)
 
     upload_id: int = Field(
@@ -60,6 +70,8 @@ class ServiceLog(SQLModel, table=True):
         nullable=False,
         index=True,
     )
+
+    service_id: str = Field(nullable=False, max_length=255, index=True)
 
     service_name: str = Field(nullable=False, max_length=255, index=True)
 

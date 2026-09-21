@@ -12,7 +12,5 @@ class BaseSchema(BaseModel):
     - alias_generator: to_camel (converts snake_case field names to camelCase in JSON)
     - populate_by_name: True (allows population of fields by their Python names)
     """
-    model_config = ConfigDict(
-        alias_generator=to_camel,
-        populate_by_name=True
-    )
+
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)

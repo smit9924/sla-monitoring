@@ -37,6 +37,13 @@ class UploadedFile(SQLModel, table=True):
         MIME type reported by the client at upload time (e.g. "text/csv").
     file_size_bytes : int | None, optional
         Size of the uploaded file in bytes.
+    gcs_bucket_name : str
+        Name of the Cloud Storage bucket the object was uploaded to.
+    storage_object_name : str
+        Object key/path the file was stored under (`<guid>.<file_extension>`).
+        This is what the `csv-parser` cloud function's Cloud Storage trigger
+        matches back to this row, so it must be set before the file is
+        uploaded to storage.
     status : FileProcessingStatus, default=QUEUED
         Current position of the file in the processing lifecycle (queued,
         in_progress, success, error). Indexed to support dashboards that
@@ -68,7 +75,9 @@ class UploadedFile(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True, index=True)
 
-    guid: uuid.UUID = Field(default_factory=uuid.uuid4, unique=True, nullable=False, index=True)
+    guid: uuid.UUID = Field(
+        default_factory=uuid.uuid4, unique=True, nullable=False, index=True
+    )
 
     original_filename: str = Field(nullable=False, max_length=255)
 
@@ -77,6 +86,12 @@ class UploadedFile(SQLModel, table=True):
     content_type: str | None = Field(default=None, max_length=100)
 
     file_size_bytes: int | None = Field(default=None)
+
+    gcs_bucket_name: str = Field(nullable=False, max_length=255)
+
+    storage_object_name: str = Field(
+        nullable=False, unique=True, index=True, max_length=255
+    )
 
     status: FileProcessingStatus = Field(
         default=FileProcessingStatus.QUEUED,

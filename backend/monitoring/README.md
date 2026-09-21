@@ -32,7 +32,7 @@ monitoring/
 ```bash
 cp .sample.env .env
 uv sync
-uv run fastapi dev monitoring/main.py
+uv run fastapi dev --port 8000 ./monitoring/main.py
 ```
 
 The health check is available at `GET /api/v1/health`, and interactive docs

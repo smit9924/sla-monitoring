@@ -1,0 +1,39 @@
+<div>
+  <h2 class="dialog-title">{{ title }}</h2>
+
+  <mat-dialog-content>
+    {{ contentText }}
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-actions">
+    @for (button of buttons; track $index) {
+      @switch (button.type) {
+        @case (GenericDialogButtonType.FILLED) {
+          <button mat-raised-button matButton="filled" (click)="onButtonClick(button)">
+            {{ button.label }}
+          </button>
+        }
+        @case (GenericDialogButtonType.OUTLINED) {
+          <button mat-stroked-button matButton="outlined" (click)="onButtonClick(button)">
+            {{ button.label }}
+          </button>
+        }
+        @case (GenericDialogButtonType.TONAL) {
+          <button mat-flat-button matButton="tonal" (click)="onButtonClick(button)">
+            {{ button.label }}
+          </button>
+        }
+        @case (GenericDialogButtonType.LINK) {
+          <button matButton (click)="onButtonClick(button)">
+            {{ button.label }}
+          </button>
+        }
+        @case (GenericDialogButtonType.ICON) {
+          <button mat-icon-button [attr.aria-label]="button.label" (click)="onButtonClick(button)">
+            <mat-icon [svgIcon]="button.iconName ?? ''" aria-hidden="false" />
+          </button>
+        }
+      }
+    }
+  </mat-dialog-actions>
+</div>

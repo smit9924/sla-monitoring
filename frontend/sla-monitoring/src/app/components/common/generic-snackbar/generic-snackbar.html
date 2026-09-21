@@ -1,0 +1,19 @@
+<div class="snackbar-content">
+  <span class="snackbar-message" matSnackBarLabel>
+    <mat-icon [svgIcon]="TYPE_META[data.type].icon" />
+    <span class="snackbar-text">{{ data.text }}</span>
+  </span>
+
+  <span matSnackBarActions>
+    @if (data.showCloseButton) {
+      <button
+        matIconButton
+        aria-label="Close snackbar"
+        matTooltip="Close snackbar"
+        (click)="dismiss()"
+      >
+        <mat-icon svgIcon="close" />
+      </button>
+    }
+  </span>
+</div>

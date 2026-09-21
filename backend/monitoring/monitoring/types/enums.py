@@ -23,3 +23,9 @@ class LogLevelName(StrEnum):
     WARNING = "WARNING"
     ERROR = "ERROR"
     CRITICAL = "CRITICAL"
+
+
+class StorageProviderName(StrEnum):
+    """Backing store selected by STORAGE_PROVIDER; dispatches the storage factory."""
+
+    GCS = "gcs"

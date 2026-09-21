@@ -3,3 +3,5 @@ from enum import IntEnum
 
 class ErrorCodes(IntEnum):
     SERVICE_UNAVAILABLE = 1001
+    STORAGE_OBJECT_NOT_FOUND = 1002
+    STORAGE_OPERATION_FAILED = 1003

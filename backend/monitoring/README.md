@@ -24,7 +24,12 @@ monitoring/
 │   ├── enums.py
 │   └── error_codes.py       # Stable numeric error codes returned to clients
 ├── logging/                 # Structured console/JSON logging setup
-└── middleware/              # Request-ID context middleware
+├── middleware/              # Request-ID context middleware
+└── storage/                 # Pluggable file storage (BaseStorage + GCS provider)
+    ├── base.py                # BaseStorage abstract interface
+    ├── factory.py             # get_storage_client() singleton factory
+    └── providers/
+        └── gcs_storage.py     # GCSStorage (Google Cloud Storage)
 ```
 
 ## Running locally

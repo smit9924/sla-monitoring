@@ -1,16 +1,65 @@
+# Reusable logging configuration (values from .env)
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "${DOCKER_LOG_MAX_SIZE}"
+    max-file: "${DOCKER_LOG_MAX_FILE}"
+
 services:
   postgres:
     image: postgres:16
     container_name: sla-monitoring-postgres
-    restart: unless-stopped
+    restart: on-failure
+    logging: *default-logging
+
     environment:
-      POSTGRES_USER: sla_admin
-      POSTGRES_PASSWORD: sla_admin_password
-      POSTGRES_DB: sla_monitoring
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    # Not published here: reached through Nginx's stream proxy instead
+    # (see nginx/stream.d/postgres.conf), so only Nginx exposes port 5432.
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - sla-monitoring-network
+
+    env_file:
+      - path: ./.env
+        required: true
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:1.29-alpine
+    container_name: sla-monitoring-nginx
+    restart: on-failure
+    logging: *default-logging
+
+    depends_on:
+      - postgres
+
+    ports:
+      - "80:80"
+      - "443:443"
+      - "5432:5432"
+
+    networks:
+      - sla-monitoring-network
+
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/stream.d:/etc/nginx/stream.d:ro
+
+networks:
+  sla-monitoring-network:
+    external: true
 
 volumes:
   postgres_data:

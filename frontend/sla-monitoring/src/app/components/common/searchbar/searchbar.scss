@@ -1,0 +1,23 @@
+.searchbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 999px;
+  padding-inline-start: 16px;
+  background-color: var(--mat-sys-surface);
+}
+
+.searchbar-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface);
+
+  &::placeholder {
+    color: var(--mat-sys-on-surface-variant);
+  }
+}

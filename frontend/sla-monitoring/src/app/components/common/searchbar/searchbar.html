@@ -1,0 +1,21 @@
+<div class="searchbar">
+  <input
+    class="searchbar-input"
+    type="text"
+    [placeholder]="placeholder()"
+    [value]="term()"
+    (input)="onTermInput($event)"
+    (keydown.enter)="emitSearch()"
+    aria-label="Search"
+  />
+
+  @if (term()) {
+    <button matIconButton type="button" aria-label="Clear search" (click)="clear()">
+      <mat-icon svgIcon="close" aria-hidden="true" />
+    </button>
+  }
+
+  <button matIconButton type="button" aria-label="Search" (click)="emitSearch()">
+    <mat-icon svgIcon="search" aria-hidden="true" />
+  </button>
+</div>

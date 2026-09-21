@@ -1,0 +1,132 @@
+<div class="upload-history-page">
+  <header class="page-header">
+    <h1 class="page-title">Upload History</h1>
+    <p class="page-subtitle">
+      Every CSV file uploaded for SLA log ingestion, and its processing status.
+    </p>
+  </header>
+
+  <main class="upload-history-content">
+    <section class="history-card">
+      <div class="history-toolbar">
+        <app-searchbar placeholder="Search by file name" (searchChanged)="onSearch($event)" />
+
+        <div class="history-toolbar-actions">
+          <button
+            matIconButton
+            type="button"
+            aria-label="Refresh"
+            matTooltip="Refresh"
+            [disabled]="isRefreshing()"
+            (click)="onRefresh()"
+          >
+            <mat-icon svgIcon="refresh" aria-hidden="true" />
+          </button>
+
+          <button matButton="filled" type="button" (click)="goToUpload()">
+            <mat-icon svgIcon="cloud-upload" aria-hidden="true" />
+            Upload new file
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="history-card history-table-card">
+      @if (isInitialLoad()) {
+        <div class="history-state" role="status" aria-live="polite">
+          <p>Loading...</p>
+        </div>
+      } @else if (!hasFiles()) {
+        <div class="history-state" role="status">
+          <mat-icon
+            class="history-state-icon"
+            [svgIcon]="isEmptySearch() ? 'search' : 'description'"
+            aria-hidden="true"
+          />
+          @if (isEmptySearch()) {
+            <p class="history-state-title">No files found</p>
+            <p class="history-state-text">
+              No uploads matched "{{ searchTerm() }}". Try a different search term.
+            </p>
+          } @else {
+            <p class="history-state-title">No files uploaded yet</p>
+            <p class="history-state-text">Upload a CSV file to see it appear here.</p>
+          }
+        </div>
+      } @else {
+        <div class="history-table-scroll">
+          <table
+            class="history-table"
+            mat-table
+            matSort
+            matSortActive="uploadedAt"
+            matSortDirection="desc"
+            matSortDisableClear
+            [dataSource]="files()"
+            (matSortChange)="onSortChange($event)"
+          >
+            <ng-container matColumnDef="originalFilename">
+              <th *matHeaderCellDef class="col-filename" mat-header-cell mat-sort-header>
+                File Name
+              </th>
+              <td *matCellDef="let file" class="col-filename" mat-cell>
+                <span class="clamp-1" [matTooltip]="file.originalFilename">{{
+                  file.originalFilename
+                }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="uploadedAt">
+              <th *matHeaderCellDef class="col-uploaded-at" mat-header-cell mat-sort-header>
+                Uploaded At
+              </th>
+              <td *matCellDef="let file" class="col-uploaded-at" mat-cell>
+                {{ file.uploadedAt | date: 'medium' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th *matHeaderCellDef class="col-status" mat-header-cell mat-sort-header>Status</th>
+              <td *matCellDef="let file" class="col-status" mat-cell>
+                <span
+                  class="status-chip"
+                  [class.status-chip--queued]="file.status === FileProcessingStatus.QUEUED"
+                  [class.status-chip--in-progress]="
+                    file.status === FileProcessingStatus.IN_PROGRESS
+                  "
+                  [class.status-chip--success]="file.status === FileProcessingStatus.SUCCESS"
+                  [class.status-chip--error]="file.status === FileProcessingStatus.ERROR"
+                  [matTooltip]="file.errorMessage ?? ''"
+                >
+                  {{ statusLabel(file.status) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="rowCount">
+              <th *matHeaderCellDef class="col-row-count" mat-header-cell>Rows</th>
+              <td *matCellDef="let file" class="col-row-count" mat-cell>
+                {{ file.rowCount ?? '—' }}
+              </td>
+            </ng-container>
+
+            <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
+            <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
+          </table>
+        </div>
+
+        <div class="history-paginator-row">
+          <mat-paginator
+            aria-label="Upload history paginator"
+            [length]="totalCount()"
+            [pageIndex]="pageIndex()"
+            [pageSize]="pageSize()"
+            [pageSizeOptions]="pageSizeOptions"
+            [showFirstLastButtons]="false"
+            (page)="onPageChange($event)"
+          />
+        </div>
+      }
+    </section>
+  </main>
+</div>

@@ -19,4 +19,20 @@ export const IconList = [
     name: 'close',
     src: 'assets/icons/close.svg',
   },
+  {
+    name: 'search',
+    src: 'assets/icons/search.svg',
+  },
+  {
+    name: 'refresh',
+    src: 'assets/icons/refresh.svg',
+  },
+  {
+    name: 'cloud-upload',
+    src: 'assets/icons/cloud-upload.svg',
+  },
+  {
+    name: 'description',
+    src: 'assets/icons/description.svg',
+  },
 ] as const;

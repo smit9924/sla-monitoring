@@ -1,0 +1,73 @@
+<div class="new-upload-page">
+  <header class="page-header">
+    <h1 class="page-title">Upload New File</h1>
+    <p class="page-subtitle">Upload a CSV file of service health-check logs for processing.</p>
+  </header>
+
+  <main class="new-upload-content">
+    <section class="upload-card">
+      <div
+        class="dropzone"
+        [class.dropzone--dragging]="isDragging()"
+        [class.dropzone--invalid]="validationError() !== null"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave()"
+        (drop)="onDrop($event)"
+      >
+        @if (!selectedFile()) {
+          <mat-icon class="dropzone-icon" svgIcon="cloud-upload" aria-hidden="true" />
+          <p class="dropzone-title">Drag and drop your CSV file here</p>
+          <p class="dropzone-subtitle">or</p>
+          <button matButton="outlined" type="button" (click)="fileInput.click()">
+            Browse files
+          </button>
+        } @else {
+          <mat-icon class="dropzone-icon" svgIcon="description" aria-hidden="true" />
+          <p class="dropzone-title">{{ selectedFile()!.name }}</p>
+          <p class="dropzone-subtitle">{{ formatBytes(selectedFile()!.size) }}</p>
+          <button
+            matButton="outlined"
+            type="button"
+            [disabled]="isUploading()"
+            (click)="removeFile()"
+          >
+            Remove file
+          </button>
+        }
+
+        <input
+          #fileInput
+          class="visually-hidden"
+          type="file"
+          accept=".csv,text/csv"
+          aria-label="Choose CSV file"
+          (change)="onFileInputChange($event)"
+        />
+      </div>
+
+      @if (validationError()) {
+        <p class="upload-error" role="alert">{{ validationError() }}</p>
+      }
+
+      <p class="upload-constraints">Only CSV files up to {{ maxFileSizeLabel }} are supported.</p>
+
+      @if (isUploading()) {
+        <div class="upload-progress">
+          <mat-progress-bar mode="determinate" [value]="uploadProgress()" />
+          <p class="upload-progress-text">Uploading... {{ uploadProgress() }}%</p>
+        </div>
+      }
+
+      <div class="upload-actions">
+        <button
+          matButton="filled"
+          type="button"
+          [disabled]="!isValid() || isUploading()"
+          (click)="onSubmit()"
+        >
+          Submit
+        </button>
+      </div>
+    </section>
+  </main>
+</div>

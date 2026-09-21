@@ -1,6 +1,7 @@
 from os import path
 from pathlib import Path
 
+from pydantic import PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from monitoring.schemas.logging_schemas import LoggingSettings
@@ -46,6 +47,25 @@ class Settings(BaseSettings):
     GCS_BUCKET_NAME: str | None = None
     GCS_CREDENTIALS_PATH: Path | None = None
     GCS_SIGNED_URL_EXPIRATION_SECONDS: int = 3600
+
+    # Postgres configuration
+    POSTGRES_SERVER: str = ...  # type: ignore
+    POSTGRES_PORT: int = ...  # type: ignore
+    POSTGRES_DB: str = ...  # type: ignore
+    POSTGRES_USER: str = ...  # type: ignore
+    POSTGRES_PASSWORD: str = ...  # type: ignore
+
+    @computed_field
+    @property
+    def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
+        return PostgresDsn.build(
+            scheme="postgresql+psycopg",
+            username=self.POSTGRES_USER,
+            password=self.POSTGRES_PASSWORD,
+            host=self.POSTGRES_SERVER,
+            port=self.POSTGRES_PORT,
+            path=self.POSTGRES_DB,
+        )
 
     def logging_settings(self) -> LoggingSettings:
         return LoggingSettings(

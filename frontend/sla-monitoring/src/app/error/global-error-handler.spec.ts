@@ -1,13 +1,20 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { TestBed } from '@angular/core/testing';
 import { TimeoutError } from 'rxjs';
 import { GlobalErrorHandler } from './global-error-handler';
+import { Dialog } from '../services/dialog';
 
 describe('GlobalErrorHandler', () => {
   let handler: GlobalErrorHandler;
+  let dialog: { openOkDialog: ReturnType<typeof vi.fn> };
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    handler = new GlobalErrorHandler();
+    dialog = { openOkDialog: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [GlobalErrorHandler, { provide: Dialog, useValue: dialog }],
+    });
+    handler = TestBed.inject(GlobalErrorHandler);
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
@@ -20,7 +27,11 @@ describe('GlobalErrorHandler', () => {
 
     handler.handleError(error);
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Network error'), error);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Network Error'), error);
+    expect(dialog.openOkDialog).toHaveBeenCalledWith(
+      'Network Error',
+      expect.stringContaining('internet connection'),
+    );
   });
 
   it('should report a TimeoutError as a timeout, not a network or server error', () => {
@@ -28,10 +39,14 @@ describe('GlobalErrorHandler', () => {
 
     handler.handleError(error);
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('timed out'), error);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Request Timeout'), error);
+    expect(dialog.openOkDialog).toHaveBeenCalledWith(
+      'Request Timeout',
+      expect.stringContaining('too long'),
+    );
   });
 
-  it('should report a 5xx HttpErrorResponse as a server error', () => {
+  it('should report a 5xx HttpErrorResponse as a server error, using the backend message', () => {
     const error = new HttpErrorResponse({
       status: 503,
       statusText: 'Service Unavailable',
@@ -41,9 +56,10 @@ describe('GlobalErrorHandler', () => {
     handler.handleError(error);
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      expect.stringMatching(/^Server error \(503\): Service is down$/),
+      expect.stringMatching(/^Server Error: Service is down$/),
       error,
     );
+    expect(dialog.openOkDialog).toHaveBeenCalledWith('Server Error', 'Service is down');
   });
 
   it('should report a 4xx HttpErrorResponse as a request error, distinct from a server error', () => {
@@ -55,20 +71,17 @@ describe('GlobalErrorHandler', () => {
 
     handler.handleError(error);
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      expect.stringMatching(/^Request error \(404\): Resource not found$/),
-      error,
-    );
+    expect(dialog.openOkDialog).toHaveBeenCalledWith('Request Error', 'Resource not found');
   });
 
-  it('should fall back to the raw HttpErrorResponse message when no structured body is present', () => {
+  it('should fall back to a generic message when no structured body is present', () => {
     const error = new HttpErrorResponse({ status: 500, statusText: 'Internal Server Error' });
 
     handler.handleError(error);
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Server error (500)'),
-      error,
+    expect(dialog.openOkDialog).toHaveBeenCalledWith(
+      'Server Error',
+      'The server encountered an error. Please try again later.',
     );
   });
 
@@ -78,8 +91,12 @@ describe('GlobalErrorHandler', () => {
     handler.handleError(error);
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Unexpected error'),
+      expect.stringContaining('Unexpected Error'),
       error,
+    );
+    expect(dialog.openOkDialog).toHaveBeenCalledWith(
+      'Unexpected Error',
+      expect.stringContaining('refresh the page'),
     );
   });
 });

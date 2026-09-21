@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: '/api/v1',
+  apiBaseUrl: 'http://api.slamonitoring.hospitia.in/api/v1',
 };

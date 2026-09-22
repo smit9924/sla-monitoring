@@ -69,6 +69,7 @@ docker compose ps
 
 | Domain | Points to | Notes |
 | --- | --- | --- |
+| `slamonitoring.hospitia.in` | Nginx (port 80/443, HTTP) | Serves the built Angular bundle as static files — see `nginx/conf.d/app.conf`. |
 | `api.slamonitoring.hospitia.in` | Nginx (port 80/443, HTTP) | Reverse-proxied to `sla-monitoring-backend:8000` — see `nginx/conf.d/api.conf`. |
 | `db.slamonitoring.hospitia.in` | Nginx (port 5432, TCP passthrough) | Proxied at L4 (not HTTP) to `sla-monitoring-postgres:5432` — see `nginx/stream.d/postgres.conf`. Postgres itself publishes no port; Nginx is the only container with `5432` exposed to the host. Connect with e.g. `postgresql://<user>:<password>@db.slamonitoring.hospitia.in:5432/sla_monitoring`. |
 
@@ -99,9 +100,51 @@ database over the shared Docker network.
 
 ---
 
+## Deploy the Frontend
+
+Unlike the backend, the frontend isn't its own container — Nginx serves the
+built bundle directly as static files, off the host filesystem, via the bind
+mount already declared in `docker-compose.yml`
+(`../frontend/sla-monitoring/dist/sla-monitoring/browser` →
+`/usr/share/nginx/html`, read-only). That path is relative to this repo's
+root, wherever it's cloned on the server — e.g. if this repo lives at
+`/home/smit/sla-monitoring`, Nginx ends up serving
+`/home/smit/sla-monitoring/frontend/sla-monitoring/dist/sla-monitoring/browser/index.html`.
+So the only step is building it in place:
+
+```bash
+cd frontend/sla-monitoring
+npm ci
+npm run build
+```
+
+That writes `dist/sla-monitoring/browser/index.html` (and the hashed
+JS/CSS), which `nginx/conf.d/app.conf` serves at `slamonitoring.hospitia.in`
+— `location /` falls back to `index.html` for any unmatched path
+(`try_files $uri $uri/ /index.html`) so Angular's client-side router handles
+deep links like `/files/:guid` correctly, while hashed static assets
+(`*.js`, `*.css`, fonts, images) get a long-lived `Cache-Control` header
+since a new build always ships under a new filename.
+
+Nginx only reads this directory at request time (no build step of its own),
+so a redeploy is just: rebuild, then nothing else — the next request picks
+up the new files immediately. If Nginx was started before the first build
+ever ran, restart it once so it re-resolves the now-populated mount:
+`docker compose restart nginx`.
+
+Before setting the `apiBaseUrl` in `src/environments/environment.prod.ts`,
+point it at `http://api.slamonitoring.hospitia.in/api/v1` — self-hosting the
+frontend on this domain avoids the cross-origin request that the previous
+Vercel-hosted frontend needed `ALLOWED_ORIGINS` for, but the backend must
+still allow this domain if you keep both deployments around.
+
+---
+
 ## 🎉 Server Setup Complete
 
 Once the backend container is running and joined to
-`sla-monitoring-network`, it is reachable through the Nginx reverse proxy at
-`api.slamonitoring.hospitia.in`, and Postgres is reachable through Nginx's
-TCP passthrough at `db.slamonitoring.hospitia.in:5432`.
+`sla-monitoring-network`, and the frontend has been built at least once, the
+full app is reachable through Nginx: the dashboard at
+`slamonitoring.hospitia.in`, the API reverse-proxied at
+`api.slamonitoring.hospitia.in`, and Postgres through Nginx's TCP
+passthrough at `db.slamonitoring.hospitia.in:5432`.

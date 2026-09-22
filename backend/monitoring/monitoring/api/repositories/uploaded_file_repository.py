@@ -29,6 +29,11 @@ _SORT_COLUMNS: dict[str, Column] = {
 }
 
 
+def get_uploaded_file_by_guid(*, session: Session, guid: UUID) -> UploadedFile | None:
+    """Look up an `uploaded_files` row by its public guid, or `None` if it doesn't exist."""
+    return session.exec(select(UploadedFile).where(UploadedFile.guid == guid)).first()
+
+
 def create_uploaded_file(*, session: Session, upload_row: UploadedFile) -> UploadedFile:
     """Insert a new `uploaded_files` row and return it with DB-generated fields populated."""
     session.add(upload_row)

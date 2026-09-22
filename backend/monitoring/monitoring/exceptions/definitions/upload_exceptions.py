@@ -24,3 +24,10 @@ class EmptyFileUploadException(BaseException):
 
     def __init__(self, message: str = "The uploaded file is empty.") -> None:
         super().__init__(ErrorCodes.EMPTY_FILE_UPLOAD, message)
+
+
+class UploadedFileNotFoundException(BaseException):
+    """Raised when no `uploaded_files` row matches the requested guid."""
+
+    def __init__(self, message: str = "The requested file was not found.") -> None:
+        super().__init__(ErrorCodes.UPLOADED_FILE_NOT_FOUND, message)

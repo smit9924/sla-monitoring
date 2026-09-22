@@ -47,4 +47,19 @@ UPLOAD_EXCEPTIONS_DOC = {
             },
         }
     },
+    "UploadedFileNotFoundException": {
+        404: {
+            "description": "No uploaded file matches the requested guid.",
+            "model": ApiErrorResponse[None],
+            "content": {
+                "application/json": {
+                    "example": {
+                        "metadata": "None",
+                        "message": "The requested file was not found.",
+                        "errorCode": ErrorCodes.UPLOADED_FILE_NOT_FOUND,
+                    }
+                }
+            },
+        }
+    },
 }

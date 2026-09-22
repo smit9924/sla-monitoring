@@ -160,6 +160,9 @@ venv.bak/
 # Nginx TLS certificates/keys (server-setup)
 server-setup/nginx/ssl/
 
+# GCP service-account key (local dev credential, never commit)
+gcs-key.json
+
 # Spyder project settings
 .spyderproject
 .spyproject

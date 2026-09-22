@@ -11,6 +11,7 @@ from monitoring.exceptions.definitions.upload_exceptions import (
     EmptyFileUploadException,
     FileTooLargeException,
     InvalidFileTypeException,
+    UploadedFileNotFoundException,
 )
 from monitoring.exceptions.handlers.health_exceptions_handlers import (
     service_unavailable_exception_handler,
@@ -23,6 +24,7 @@ from monitoring.exceptions.handlers.upload_exceptions_handlers import (
     empty_file_upload_exception_handler,
     file_too_large_exception_handler,
     invalid_file_type_exception_handler,
+    uploaded_file_not_found_exception_handler,
 )
 
 
@@ -41,4 +43,5 @@ def get_exception_handlers() -> dict[Any, Any]:
         InvalidFileTypeException: invalid_file_type_exception_handler,
         FileTooLargeException: file_too_large_exception_handler,
         EmptyFileUploadException: empty_file_upload_exception_handler,
+        UploadedFileNotFoundException: uploaded_file_not_found_exception_handler,
     }

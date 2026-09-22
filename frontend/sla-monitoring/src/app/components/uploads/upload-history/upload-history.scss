@@ -112,6 +112,23 @@
   overflow: hidden;
 }
 
+.filename-link {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--mat-sys-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+
 .status-chip {
   display: inline-flex;
   align-items: center;

@@ -70,9 +70,20 @@
                 File Name
               </th>
               <td *matCellDef="let file" class="col-filename" mat-cell>
-                <span class="clamp-1" [matTooltip]="file.originalFilename">{{
-                  file.originalFilename
-                }}</span>
+                @if (file.status === FileProcessingStatus.SUCCESS) {
+                  <button
+                    type="button"
+                    class="filename-link"
+                    [matTooltip]="file.originalFilename"
+                    (click)="viewFileStats(file)"
+                  >
+                    <span class="clamp-1">{{ file.originalFilename }}</span>
+                  </button>
+                } @else {
+                  <span class="clamp-1" [matTooltip]="file.originalFilename">{{
+                    file.originalFilename
+                  }}</span>
+                }
               </td>
             </ng-container>
 

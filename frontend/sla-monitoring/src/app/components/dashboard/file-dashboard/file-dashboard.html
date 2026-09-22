@@ -1,0 +1,158 @@
+<div class="file-dashboard-page">
+  <header class="page-header">
+    <button matButton type="button" (click)="goBack()">Back to upload history</button>
+  </header>
+
+  <main class="file-dashboard-content">
+    @if (isLoadingStats()) {
+      <div class="dashboard-state" role="status" aria-live="polite">
+        <mat-spinner diameter="32" />
+        <p>Loading statistics...</p>
+      </div>
+    } @else if (stats(); as data) {
+      <mat-accordion multi class="dashboard-accordion">
+        <mat-expansion-panel [expanded]="true" class="sla-panel">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon
+                [svgIcon]="data.overallSlaFulfilled ? 'success' : 'error'"
+                aria-hidden="true"
+              />
+              SLA Compliance
+            </mat-panel-title>
+            <mat-panel-description>
+              <span
+                class="sla-chip"
+                [class.sla-chip--pass]="data.overallSlaFulfilled"
+                [class.sla-chip--fail]="!data.overallSlaFulfilled"
+              >
+                {{ data.overallSlaFulfilled ? 'SLA Fulfilled' : 'SLA Breached' }}
+              </span>
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div
+            class="sla-banner"
+            [class.sla-banner--pass]="data.overallSlaFulfilled"
+            [class.sla-banner--fail]="!data.overallSlaFulfilled"
+          >
+            <p>
+              Overall uptime across all services is
+              <strong>{{ data.overallUptimePercentage }}%</strong>
+              against a <strong>{{ data.slaThresholdPercentage }}%</strong> SLA target.
+              @if (data.overallSlaFulfilled) {
+                Every service met its SLA — no billing credit applies.
+              } @else {
+                One or more services fell below the SLA target — a billing credit applies
+                automatically.
+              }
+            </p>
+          </div>
+
+          <section class="chart-section">
+            <h2 class="section-heading">Daily failure count by service</h2>
+            <app-line-chart
+              [labels]="chartDisplayLabels()"
+              [datasets]="chartDatasets()"
+              ariaLabel="Daily failure count per service"
+            />
+          </section>
+
+          <section class="service-stats-section">
+            <h2 class="section-heading">Service breakdown</h2>
+            <div class="service-stat-grid">
+              @for (service of data.services; track service.serviceId) {
+                <div
+                  class="service-stat-card"
+                  [class.service-stat-card--pass]="service.slaFulfilled"
+                  [class.service-stat-card--fail]="!service.slaFulfilled"
+                >
+                  <div class="service-stat-card-header">
+                    <span class="service-name">{{ service.serviceName }}</span>
+                    <span
+                      class="sla-chip"
+                      [class.sla-chip--pass]="service.slaFulfilled"
+                      [class.sla-chip--fail]="!service.slaFulfilled"
+                    >
+                      {{ service.slaFulfilled ? 'Fulfilled' : 'Breached' }}
+                    </span>
+                  </div>
+                  <div class="service-stat-metric">
+                    <span class="metric-value">{{ service.uptimePercentage }}%</span>
+                    <span class="metric-label">Uptime achieved</span>
+                  </div>
+                  <p class="service-stat-footnote">
+                    {{ service.failedChecks }} failed / {{ service.totalChecks }} checks
+                  </p>
+                </div>
+              }
+            </div>
+          </section>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel class="logs-panel" (opened)="onLogsPanelOpened()">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon svgIcon="description" aria-hidden="true" />
+              Logs
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          @if (isLoadingLogs()) {
+            <div class="dashboard-state" role="status" aria-live="polite">
+              <mat-spinner diameter="32" />
+              <p>Loading logs...</p>
+            </div>
+          } @else if (logGroups().length > 0) {
+            @for (group of logGroups(); track group.serviceId) {
+              <section class="log-service-section">
+                <h3 class="log-service-heading">
+                  {{ group.serviceName }}
+                  <span class="log-count">({{ group.totalCount }} logs)</span>
+                </h3>
+
+                <div class="logs-table-scroll">
+                  <table class="logs-table">
+                    <thead>
+                      <tr>
+                        <th>Recorded At</th>
+                        <th>Status</th>
+                        <th>Latency (ms)</th>
+                        <th>Agent</th>
+                        <th>Region</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (log of group.logs; track log.id) {
+                        <tr [class.log-row--failure]="log.isFailure">
+                          <td>{{ log.recordedAt | date: 'medium' }}</td>
+                          <td>{{ log.statusCode }}</td>
+                          <td>{{ log.latencyMs ?? '—' }}</td>
+                          <td>{{ log.agent ?? '—' }}</td>
+                          <td>{{ log.region ?? '—' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                @if (group.hasMore) {
+                  <button
+                    matButton="outlined"
+                    type="button"
+                    [disabled]="isLoadingMore(group.serviceId)"
+                    (click)="loadMoreLogs(group.serviceId)"
+                  >
+                    Show more
+                  </button>
+                }
+              </section>
+            }
+          } @else {
+            <p class="dashboard-empty-text">No logs found for this file.</p>
+          }
+        </mat-expansion-panel>
+      </mat-accordion>
+    }
+  </main>
+</div>

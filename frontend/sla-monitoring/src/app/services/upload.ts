@@ -3,6 +3,8 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { apiRoutes } from '../data/api-routes';
 import { SkipLoading } from '../interceptors/loader/loader-interceptor';
+import { FileLogsResponse, ServiceLogQuery } from '../types/interfaces/service-log';
+import { FileStatsResponse } from '../types/interfaces/stats';
 import {
   UploadedFileResponse,
   UploadHistoryQuery,
@@ -43,6 +45,22 @@ export class Upload {
       reportProgress: true,
       observe: 'events',
       context: new HttpContext().set(SkipLoading, true),
+    });
+  }
+
+  /** Returns the SLA stats accordion's data (overall + per-service uptime, daily failure chart). */
+  getFileStats(guid: string): Observable<FileStatsResponse> {
+    return this.http.get<FileStatsResponse>(apiRoutes.files.stats(guid));
+  }
+
+  /**
+   * Returns the logs accordion's data. With no `query`, fetches every service's initial
+   * batch (the accordion's first-expand load). With `query`, fetches just that one
+   * service's next batch at `query.offset` (a "Show more" click).
+   */
+  getFileLogs(guid: string, query?: ServiceLogQuery): Observable<FileLogsResponse> {
+    return this.http.get<FileLogsResponse>(apiRoutes.files.logs(guid), {
+      params: query ? { serviceId: query.serviceId, offset: query.offset } : {},
     });
   }
 }

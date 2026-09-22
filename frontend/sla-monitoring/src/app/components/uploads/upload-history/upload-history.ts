@@ -9,7 +9,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { Searchbar } from '../../common/searchbar/searchbar';
-import { appRoutes } from '../../../data/app-routes';
+import { appRoutes, buildFileDashboardRoute } from '../../../data/app-routes';
 import { Upload } from '../../../services/upload';
 import { FileProcessingStatus } from '../../../types/enums/upload';
 import { UploadedFileListItem, UploadHistorySortBy } from '../../../types/interfaces/upload';
@@ -88,6 +88,14 @@ export class UploadHistory implements OnInit {
 
   protected async goToUpload(): Promise<void> {
     await this.router.navigateByUrl(appRoutes.newUpload);
+  }
+
+  /** Only successfully-processed files have statistics/logs to show; the filename link is gated on that. */
+  protected async viewFileStats(file: UploadedFileListItem): Promise<void> {
+    if (file.status !== FileProcessingStatus.SUCCESS) {
+      return;
+    }
+    await this.router.navigateByUrl(buildFileDashboardRoute(file.guid));
   }
 
   protected statusLabel(status: FileProcessingStatus): string {

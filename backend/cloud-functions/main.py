@@ -56,10 +56,13 @@ def _validate_extension(object_name: str) -> None:
 
 def _download_csv_bytes(bucket_name: str, object_name: str) -> bytes:
     """Download the uploaded object's raw bytes from Cloud Storage."""
+    log.info("Downloading '%s' from bucket '%s'.", object_name, bucket_name)
     try:
         client = storage.Client()
         blob = client.bucket(bucket_name).blob(object_name)
-        return blob.download_as_bytes()
+        raw_bytes = blob.download_as_bytes()
+        log.info("Downloaded '%s' (%d bytes).", object_name, len(raw_bytes))
+        return raw_bytes
     except NotFound as e:
         raise CsvProcessingError(
             FileProcessingErrorCode.STORAGE_DOWNLOAD_FAILED,
@@ -113,11 +116,13 @@ def _load_csv(raw_bytes: bytes) -> pd.DataFrame:
             "The uploaded file has a header but no data rows.",
         )
 
+    log.info("Loaded CSV into DataFrame: %d rows, %d columns.", len(df), len(df.columns))
     return df
 
 
 def _persist_logs(session: Session, upload_id: int, df: pd.DataFrame) -> None:
     """Insert every cleaned row as a ServiceLog, all in a single transaction."""
+    log.info("Persisting %d cleaned rows for upload %d.", len(df), upload_id)
     logs = [
         ServiceLog(
             upload_id=upload_id,
@@ -135,6 +140,7 @@ def _persist_logs(session: Session, upload_id: int, df: pd.DataFrame) -> None:
     try:
         session.add_all(logs)
         session.commit()
+        log.info("Persisted %d service log rows for upload %d.", len(logs), upload_id)
     except SQLAlchemyError as e:
         session.rollback()
         log.exception("Failed to write %d service log rows for upload %d", len(logs), upload_id)
@@ -182,16 +188,22 @@ def parse_csv(cloud_event):
     bucket_name = data["bucket"]
     object_name = data["name"]
 
+    log.info("Received Cloud Storage event for '%s' in bucket '%s'.", object_name, bucket_name)
+
     # Step 1: establish the database connection up front. If the database
     # itself is unreachable, there is no `uploaded_files` row to mark as
     # ERROR either, so the only thing we can do is log loudly and stop.
+    log.info("Checking database connection.")
     try:
         db.check_connection()
     except SQLAlchemyError:
-        log.critical("Could not connect to the database while processing '%s'", object_name)
+        log.critical(
+            "Could not connect to the database while processing '%s'", object_name, exc_info=True
+        )
         return
 
     with Session(db.get_engine()) as session:
+        log.info("Looking up uploaded_files record for '%s'.", object_name)
         upload_row = session.exec(
             select(UploadedFile).where(UploadedFile.storage_object_name == object_name)
         ).first()
@@ -211,22 +223,28 @@ def parse_csv(cloud_event):
         # Step 2: mark the file as being worked on before anything else, so
         # anyone looking at the dashboard sees it move out of "queued"
         # immediately, even if parsing takes a while.
+        log.info("Marking upload %d as IN_PROGRESS.", upload_row.id)
         _mark_status(session, upload_row, FileProcessingStatus.IN_PROGRESS)
 
         try:
             # Step 3: reject anything that isn't a .csv file.
+            log.info("Validating file extension for '%s'.", object_name)
             _validate_extension(object_name)
 
             # Step 4 (part 1): fetch the file and load it into a DataFrame.
             raw_bytes = _download_csv_bytes(bucket_name, object_name)
+            log.info("Parsing CSV bytes into a DataFrame.")
             df = _load_csv(raw_bytes)
 
             # Step 4 (part 2): make sure every required column is present.
+            log.info("Validating required columns are present.")
             validate_columns(df)
 
             # Steps 5-7: convert timestamps to UTC, convert latency to ms,
             # drop unusable/duplicate rows, and sort by time ascending.
+            log.info("Cleaning DataFrame (timestamps, latency, duplicates, sort).")
             cleaned_df = clean_dataframe(df)
+            log.info("Cleaning complete: %d rows remain.", len(cleaned_df))
 
             # Step 8: save the cleaned rows, linked back to this file.
             _persist_logs(session, upload_row.id, cleaned_df)
@@ -234,6 +252,7 @@ def parse_csv(cloud_event):
             # A known, specific failure: record its error code so the
             # frontend can show a precise message.
             log.error("Processing failed for '%s': %s", object_name, e.message)
+            log.info("Marking upload %d as ERROR (%s).", upload_row.id, e.error_code)
             _mark_status(
                 session,
                 upload_row,
@@ -245,6 +264,7 @@ def parse_csv(cloud_event):
             # Anything not already covered above. Logged in full for
             # debugging, but only a generic code is stored on the row.
             log.exception("Unexpected error processing '%s'", object_name)
+            log.info("Marking upload %d as ERROR (UNKNOWN_ERROR).", upload_row.id)
             _mark_status(
                 session,
                 upload_row,
@@ -254,6 +274,7 @@ def parse_csv(cloud_event):
             )
         else:
             # Step 9: everything succeeded.
+            log.info("Marking upload %d as SUCCESS.", upload_row.id)
             _mark_status(
                 session,
                 upload_row,
